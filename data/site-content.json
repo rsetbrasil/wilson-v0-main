@@ -1,0 +1,75 @@
+{
+  "hero": {
+    "title": "Transporte e Turismo com Conforto e Segurança",
+    "description": "Oferecemos soluções completas em fretamento e turismo, garantindo pontualidade, conforto e segurança para sua viagem",
+    "backgroundImage": "/images/whatsapp-20image-202025-12-21-20at-2010.jpeg"
+  },
+  "contact": {
+    "phone": "(85) 99706-8113",
+    "email": "contato@wilsonturismo.com",
+    "address": "Rua Exemplo, 123 - Fortaleza, CE"
+  },
+  "services": [
+    {
+      "title": "Aluguel de Vans",
+      "description": "Aluguel de vans para traslados, diariamente por 5, 8 ou 10 horas, com possibilidade de adaptação às necessidades do cliente."
+    },
+    {
+      "title": "Turismo",
+      "description": "Somos verdadeiros parceiros quando se trata de criar um plano de operações que atenda às suas necessidades turísticas da melhor maneira possível."
+    },
+    {
+      "title": "Fretamento",
+      "description": "Esse serviço é essencial para facilitar a vida dos funcionários, especialmente em empresas de difícil acesso ou localizadas em rodovias."
+    },
+    {
+      "title": "Excursões",
+      "description": "Organizamos excursões para grupos, escolas e empresas com roteiros personalizados e guias especializados."
+    }
+  ],
+  "destinations": [
+    {
+      "name": "Morro Branco",
+      "image": "/morro-branco-beach-ceara-brazil.jpg"
+    },
+    {
+      "name": "Canoa Quebrada",
+      "image": "/canoa-quebrada-beach-ceara-brazil.jpg"
+    },
+    {
+      "name": "Praia das Fontes",
+      "image": "/praia-das-fontes-ceara-brazil.jpg"
+    },
+    {
+      "name": "Beach Park",
+      "image": "/beach-park-ceara-brazil.jpg"
+    }
+  ],
+  "about": {
+    "title": "Quem Somos",
+    "text1": "A Wilson Turismo é uma empresa que se destaca por sua moderna frota de veículos, aliada a uma equipe treinada e pronta para atender às necessidades de seus clientes.",
+    "text2": "A missão da empresa no mercado é oferecer soluções em serviços de transporte, garantindo a segurança, a pontualidade e o conforto de nossos passageiros."
+  },
+  "fleet": [
+    {
+      "title": "Ônibus de Turismo",
+      "description": "Ônibus completos com ar-condicionado, assentos reclináveis e sistema de som para viagens longas.",
+      "capacity": "Até 45 pessoas",
+      "image": "/images/whatsapp-20image-202025-12-21-20at-2010.jpeg"
+    },
+    {
+      "title": "Vans Executivas",
+      "description": "Vans modernas e confortáveis para grupos menores, ideais para traslados e eventos corporativos.",
+      "capacity": "Até 15 pessoas",
+      "image": "/images/whatsapp-20image-202025-12-21-20at-2010.jpeg"
+    }
+  ],
+  "footer": {
+    "description": "Transporte e turismo com segurança, conforto e pontualidade para todo o Brasil.",
+    "copyright": "© 2025 Wilson Turismo. Todos os direitos reservados."
+  },
+  "auth": {
+    "email": "admin@wilsonturismo.com",
+    "password": "123456"
+  }
+}

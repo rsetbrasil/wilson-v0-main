@@ -1,0 +1,341 @@
+"use client"
+
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { LogOut, User, Save, Plus, Trash2 } from "lucide-react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { getSiteContent, updateSiteContent, type SiteContent } from "@/lib/actions"
+import { toast } from "sonner"
+import { ImageUpload } from "@/components/ui/image-upload"
+
+export default function DashboardPage() {
+    const router = useRouter()
+    const [content, setContent] = useState<SiteContent | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
+    const [isSaving, setIsSaving] = useState(false)
+
+    useEffect(() => {
+        getSiteContent().then((data) => {
+            setContent(data)
+            setIsLoading(false)
+        })
+    }, [])
+
+    const handleLogout = () => {
+        router.push("/login")
+    }
+
+    const handleSave = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!content) return
+
+        setIsSaving(true)
+        const result = await updateSiteContent(content)
+        setIsSaving(false)
+
+        if (result.success) {
+            toast.success("Conteúdo atualizado com sucesso!")
+            router.refresh()
+        } else {
+            toast.error("Erro ao atualizar conteúdo.")
+        }
+    }
+
+    const updateField = (section: keyof SiteContent, field: string, value: string) => {
+        if (!content) return
+        // @ts-ignore - dynamic key access
+        setContent({
+            ...content,
+            [section]: {
+                // @ts-ignore
+                ...content[section],
+                [field]: value
+            }
+        })
+    }
+
+    // Helpers for Array handling
+    const updateArrayItem = (section: 'services' | 'destinations' | 'fleet', index: number, field: string, value: string) => {
+        if (!content) return
+        const newArray = [...content[section]]
+        // @ts-ignore
+        newArray[index] = { ...newArray[index], [field]: value }
+        setContent({ ...content, [section]: newArray })
+    }
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <p>Carregando dados...</p>
+            </div>
+        )
+    }
+
+    return (
+        <div className="min-h-screen bg-muted/40 p-8">
+            <div className="mx-auto max-w-6xl space-y-8">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                        <p className="text-muted-foreground">Gerencie todo o conteúdo do site.</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-background px-4 py-2 rounded-full border">
+                            <User className="h-4 w-4" />
+                            {content?.auth.email.split('@')[0] || 'admin'}
+                        </div>
+                        <Button variant="outline" onClick={handleLogout} className="gap-2">
+                            <LogOut className="h-4 w-4" />
+                            Sair
+                        </Button>
+                        <Button asChild>
+                            <Link href="/">Ir para o Site</Link>
+                        </Button>
+                    </div>
+                </div>
+
+                <form onSubmit={handleSave}>
+                    <div className="flex justify-end mb-4">
+                        <Button type="submit" disabled={isSaving} className="w-full md:w-auto">
+                            {isSaving ? "Salvando..." : <><Save className="w-4 h-4 mr-2" /> Salvar Todas Alterações</>}
+                        </Button>
+                    </div>
+
+                    <Tabs defaultValue="general" className="space-y-4">
+                        <TabsList className="bg-background border h-auto flex-wrap p-2">
+                            <TabsTrigger value="general">Geral (Hero/Contato)</TabsTrigger>
+                            <TabsTrigger value="services">Serviços</TabsTrigger>
+                            <TabsTrigger value="destinations">Destinos</TabsTrigger>
+                            <TabsTrigger value="fleet">Frota</TabsTrigger>
+                            <TabsTrigger value="about">Sobre/Rodapé</TabsTrigger>
+                            <TabsTrigger value="security">Segurança</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="general">
+                            <Card>
+                                <CardHeader><CardTitle>Informações Gerais</CardTitle></CardHeader>
+                                <CardContent className="space-y-6">
+                                    {/* Hero */}
+                                    <div className="space-y-4 border p-4 rounded-lg">
+                                        <h3 className="text-lg font-semibold">Topo do Site (Hero)</h3>
+                                        <div className="space-y-2">
+                                            <Label>Título Principal</Label>
+                                            <Input value={content?.hero.title || ''} onChange={(e) => updateField('hero', 'title', e.target.value)} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Descrição</Label>
+                                            <Textarea value={content?.hero.description || ''} onChange={(e) => updateField('hero', 'description', e.target.value)} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Imagem de Fundo</Label>
+                                            <ImageUpload
+                                                value={content?.hero.backgroundImage || ''}
+                                                onChange={(url) => updateField('hero', 'backgroundImage', url)}
+                                                pathPrefix="hero"
+                                                recommendedSize="1920x1080px (Alta Qualidade)"
+                                            />
+                                        </div>
+                                    </div>
+                                    {/* Contact */}
+                                    <div className="space-y-4 border p-4 rounded-lg">
+                                        <h3 className="text-lg font-semibold">Contato</h3>
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label>Telefone</Label>
+                                                <Input value={content?.contact.phone || ''} onChange={(e) => updateField('contact', 'phone', e.target.value)} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Email</Label>
+                                                <Input value={content?.contact.email || ''} onChange={(e) => updateField('contact', 'email', e.target.value)} />
+                                            </div>
+                                            <div className="space-y-2 md:col-span-2">
+                                                <Label>Endereço</Label>
+                                                <Input value={content?.contact.address || ''} onChange={(e) => updateField('contact', 'address', e.target.value)} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        <TabsContent value="services">
+                            <Card>
+                                <CardHeader><CardTitle>Serviços</CardTitle></CardHeader>
+                                <CardContent className="space-y-6">
+                                    {content?.services.map((service, index) => (
+                                        <div key={index} className="border p-4 rounded-lg space-y-3 relative bg-background/50">
+                                            <div className="bg-muted px-2 py-1 absolute top-2 right-2 rounded text-xs">#{index + 1}</div>
+                                            <div className="space-y-2">
+                                                <Label>Título do Serviço</Label>
+                                                <Input value={service.title} onChange={(e) => updateArrayItem('services', index, 'title', e.target.value)} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Descrição</Label>
+                                                <Textarea value={service.description} onChange={(e) => updateArrayItem('services', index, 'description', e.target.value)} />
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <div className="text-center text-sm text-muted-foreground p-2">
+                                        Para adicionar novos serviços, favor contatar o suporte técnico em atualizações futuras.
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        <TabsContent value="destinations">
+                            <Card>
+                                <CardHeader><CardTitle>Destinos Populares</CardTitle></CardHeader>
+                                <CardContent className="space-y-6">
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        {content?.destinations.map((dest, index) => (
+                                            <div key={index} className="border p-4 rounded-lg space-y-3">
+                                                <div className="space-y-2">
+                                                    <Label>Nome do Destino</Label>
+                                                    <Input value={dest.name} onChange={(e) => updateArrayItem('destinations', index, 'name', e.target.value)} />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Imagem</Label>
+                                                    <ImageUpload
+                                                        value={dest.image}
+                                                        onChange={(url) => updateArrayItem('destinations', index, 'image', url)}
+                                                        pathPrefix="destinations"
+                                                        recommendedSize="800x600px"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        <TabsContent value="fleet">
+                            <Card>
+                                <CardHeader><CardTitle>Nossa Frota</CardTitle></CardHeader>
+                                <CardContent className="space-y-8">
+                                    {content?.fleet.map((item, index) => (
+                                        <div key={index} className="border p-4 rounded-lg space-y-4">
+                                            <h4 className="font-semibold text-primary">Veículo #{index + 1}</h4>
+                                            <div className="grid md:grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label>Nome/Modelo</Label>
+                                                    <Input value={item.title} onChange={(e) => updateArrayItem('fleet', index, 'title', e.target.value)} />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Capacidade</Label>
+                                                    <Input value={item.capacity} onChange={(e) => updateArrayItem('fleet', index, 'capacity', e.target.value)} />
+                                                </div>
+                                                <div className="space-y-2 md:col-span-2">
+                                                    <Label>Imagem</Label>
+                                                    <ImageUpload
+                                                        value={item.image}
+                                                        onChange={(url) => updateArrayItem('fleet', index, 'image', url)}
+                                                        pathPrefix="fleet"
+                                                        recommendedSize="1200x800px"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2 md:col-span-2">
+                                                    <Label>Descrição</Label>
+                                                    <Textarea value={item.description} onChange={(e) => updateArrayItem('fleet', index, 'description', e.target.value)} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        <TabsContent value="about">
+                            <Card>
+                                <CardHeader><CardTitle>Sobre e Rodapé</CardTitle></CardHeader>
+                                <CardContent className="space-y-6">
+                                    <div className="space-y-4 border p-4 rounded-lg">
+                                        <h3 className="text-lg font-semibold">Página Sobre</h3>
+                                        <div className="space-y-2">
+                                            <Label>Título Principal</Label>
+                                            <Input value={content?.about.title || ''} onChange={(e) => updateField('about', 'title', e.target.value)} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Texto Principal (Parágrafo 1)</Label>
+                                            <Textarea className="h-24" value={content?.about.text1 || ''} onChange={(e) => updateField('about', 'text1', e.target.value)} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Texto Secundário (Parágrafo 2)</Label>
+                                            <Textarea className="h-24" value={content?.about.text2 || ''} onChange={(e) => updateField('about', 'text2', e.target.value)} />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4 border p-4 rounded-lg">
+                                        <h3 className="text-lg font-semibold">Rodapé</h3>
+                                        <div className="space-y-2">
+                                            <Label>Descrição Curta</Label>
+                                            <Input value={content?.footer.description || ''} onChange={(e) => updateField('footer', 'description', e.target.value)} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Copyright</Label>
+                                            <Input value={content?.footer.copyright || ''} onChange={(e) => updateField('footer', 'copyright', e.target.value)} />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        <TabsContent value="security">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Segurança e Acesso</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-6">
+                                    <div className="space-y-4 border p-4 rounded-lg">
+                                        <h3 className="text-lg font-semibold">Credenciais do Administrador</h3>
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label>Email de Login</Label>
+                                                <Input
+                                                    type="email"
+                                                    value={content?.auth.email || ''}
+                                                    onChange={(e) => updateField('auth', 'email', e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Nova Senha</Label>
+                                                <Input
+                                                    type="password"
+                                                    value={content?.auth.password || ''}
+                                                    onChange={(e) => updateField('auth', 'password', e.target.value)}
+                                                />
+                                                <p className="text-xs text-muted-foreground italic">
+                                                    Mínimo de 6 caracteres recomendado.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="bg-amber-50 border-amber-200 border p-4 rounded-lg flex items-start gap-3">
+                                        <div className="bg-amber-100 p-2 rounded-full">
+                                            <Save className="h-4 w-4 text-amber-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-amber-900">Atenção</p>
+                                            <p className="text-sm text-amber-700">
+                                                Ao alterar essas credenciais, você precisará usá-las no próximo login.
+                                                Certifique-se de salvá-las em um local seguro.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                    </Tabs>
+                </form>
+            </div>
+        </div>
+    )
+}
