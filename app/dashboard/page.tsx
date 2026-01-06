@@ -22,7 +22,18 @@ export default function DashboardPage() {
 
     useEffect(() => {
         getSiteContent().then((data) => {
-            setContent(data)
+            const normalizedContact = {
+                ...data.contact,
+                phones: data.contact.phones?.length ? data.contact.phones : data.contact.phone ? [data.contact.phone] : [],
+                officeHours: data.contact.officeHours ?? [],
+                sectionTitle: data.contact.sectionTitle ?? "Entre em Contato",
+                sectionSubtitle:
+                    data.contact.sectionSubtitle ?? "Estamos prontos para atender você e planejar sua próxima viagem",
+                location: data.contact.location ?? "",
+                formTitle: data.contact.formTitle ?? "Solicite um Orçamento",
+                formSubmitLabel: data.contact.formSubmitLabel ?? "Enviar Solicitação"
+            }
+            setContent({ ...data, contact: normalizedContact })
             setIsLoading(false)
         })
     }, [])
@@ -67,6 +78,56 @@ export default function DashboardPage() {
         // @ts-ignore
         newArray[index] = { ...newArray[index], [field]: value }
         setContent({ ...content, [section]: newArray })
+    }
+
+    const updateContactStringListItem = (field: 'phones' | 'officeHours', index: number, value: string) => {
+        if (!content) return
+        const nextList = [...(content.contact[field] ?? [])]
+        nextList[index] = value
+
+        const nextContact = {
+            ...content.contact,
+            [field]: nextList
+        } as SiteContent["contact"]
+
+        if (field === 'phones') {
+            nextContact.phone = nextList[0] ?? ""
+        }
+
+        setContent({ ...content, contact: nextContact })
+    }
+
+    const addContactStringListItem = (field: 'phones' | 'officeHours') => {
+        if (!content) return
+        const nextList = [...(content.contact[field] ?? []), ""]
+
+        const nextContact = {
+            ...content.contact,
+            [field]: nextList
+        } as SiteContent["contact"]
+
+        if (field === 'phones' && !nextContact.phone) {
+            nextContact.phone = nextList[0] ?? ""
+        }
+
+        setContent({ ...content, contact: nextContact })
+    }
+
+    const removeContactStringListItem = (field: 'phones' | 'officeHours', index: number) => {
+        if (!content) return
+        const nextList = [...(content.contact[field] ?? [])]
+        nextList.splice(index, 1)
+
+        const nextContact = {
+            ...content.contact,
+            [field]: nextList
+        } as SiteContent["contact"]
+
+        if (field === 'phones') {
+            nextContact.phone = nextList[0] ?? ""
+        }
+
+        setContent({ ...content, contact: nextContact })
     }
 
     if (isLoading) {
@@ -146,18 +207,110 @@ export default function DashboardPage() {
                                     {/* Contact */}
                                     <div className="space-y-4 border p-4 rounded-lg">
                                         <h3 className="text-lg font-semibold">Contato</h3>
-                                        <div className="grid md:grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <Label>Telefone</Label>
-                                                <Input value={content?.contact.phone || ''} onChange={(e) => updateField('contact', 'phone', e.target.value)} />
+                                        <div className="space-y-6">
+                                            <div className="grid md:grid-cols-2 gap-4">
+                                                <div className="space-y-2 md:col-span-2">
+                                                    <Label>Título da Seção</Label>
+                                                    <Input value={content?.contact.sectionTitle || ''} onChange={(e) => updateField('contact', 'sectionTitle', e.target.value)} />
+                                                </div>
+                                                <div className="space-y-2 md:col-span-2">
+                                                    <Label>Subtítulo da Seção</Label>
+                                                    <Textarea value={content?.contact.sectionSubtitle || ''} onChange={(e) => updateField('contact', 'sectionSubtitle', e.target.value)} />
+                                                </div>
                                             </div>
-                                            <div className="space-y-2">
-                                                <Label>Email</Label>
-                                                <Input value={content?.contact.email || ''} onChange={(e) => updateField('contact', 'email', e.target.value)} />
+
+                                            <div className="grid md:grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label>Telefone Principal</Label>
+                                                    <Input
+                                                        value={content?.contact.phone || ''}
+                                                        onChange={(e) => {
+                                                            if (!content) return
+                                                            const nextPhones = [...(content.contact.phones ?? [])]
+                                                            if (nextPhones.length === 0) nextPhones.push(e.target.value)
+                                                            else nextPhones[0] = e.target.value
+                                                            setContent({
+                                                                ...content,
+                                                                contact: { ...content.contact, phone: e.target.value, phones: nextPhones }
+                                                            })
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Email</Label>
+                                                    <Input value={content?.contact.email || ''} onChange={(e) => updateField('contact', 'email', e.target.value)} />
+                                                </div>
+                                                <div className="space-y-2 md:col-span-2">
+                                                    <Label>Localização</Label>
+                                                    <Input value={content?.contact.location || ''} onChange={(e) => updateField('contact', 'location', e.target.value)} />
+                                                </div>
+                                                <div className="space-y-2 md:col-span-2">
+                                                    <Label>Endereço</Label>
+                                                    <Input value={content?.contact.address || ''} onChange={(e) => updateField('contact', 'address', e.target.value)} />
+                                                </div>
                                             </div>
-                                            <div className="space-y-2 md:col-span-2">
-                                                <Label>Endereço</Label>
-                                                <Input value={content?.contact.address || ''} onChange={(e) => updateField('contact', 'address', e.target.value)} />
+
+                                            <div className="space-y-3">
+                                                <div className="flex items-center justify-between gap-4">
+                                                    <Label>Telefones (lista)</Label>
+                                                    <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => addContactStringListItem('phones')}>
+                                                        <Plus className="h-4 w-4" />
+                                                        Adicionar
+                                                    </Button>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    {(content?.contact.phones ?? []).map((phone, index) => (
+                                                        <div key={`${index}`} className="flex items-center gap-2">
+                                                            <Input value={phone} onChange={(e) => updateContactStringListItem('phones', index, e.target.value)} />
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                size="icon"
+                                                                onClick={() => removeContactStringListItem('phones', index)}
+                                                                aria-label="Remover telefone"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                <div className="flex items-center justify-between gap-4">
+                                                    <Label>Horário de Atendimento (linhas)</Label>
+                                                    <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => addContactStringListItem('officeHours')}>
+                                                        <Plus className="h-4 w-4" />
+                                                        Adicionar
+                                                    </Button>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    {(content?.contact.officeHours ?? []).map((line, index) => (
+                                                        <div key={`${index}`} className="flex items-center gap-2">
+                                                            <Input value={line} onChange={(e) => updateContactStringListItem('officeHours', index, e.target.value)} />
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                size="icon"
+                                                                onClick={() => removeContactStringListItem('officeHours', index)}
+                                                                aria-label="Remover horário"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="grid md:grid-cols-2 gap-4">
+                                                <div className="space-y-2 md:col-span-2">
+                                                    <Label>Título do Formulário</Label>
+                                                    <Input value={content?.contact.formTitle || ''} onChange={(e) => updateField('contact', 'formTitle', e.target.value)} />
+                                                </div>
+                                                <div className="space-y-2 md:col-span-2">
+                                                    <Label>Texto do Botão</Label>
+                                                    <Input value={content?.contact.formSubmitLabel || ''} onChange={(e) => updateField('contact', 'formSubmitLabel', e.target.value)} />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -269,6 +422,31 @@ export default function DashboardPage() {
                                         <div className="space-y-2">
                                             <Label>Texto Secundário (Parágrafo 2)</Label>
                                             <Textarea className="h-24" value={content?.about.text2 || ''} onChange={(e) => updateField('about', 'text2', e.target.value)} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>URL do Vídeo</Label>
+                                            <Input value={content?.about.videoUrl || ''} onChange={(e) => updateField('about', 'videoUrl', e.target.value)} placeholder="https://youtu.be/... ou https://.../video.mp4" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Upload de Vídeo (MP4)</Label>
+                                            <ImageUpload
+                                                value={content?.about.videoUrl || ''}
+                                                onChange={(url) => updateField('about', 'videoUrl', url)}
+                                                pathPrefix="about-video"
+                                                recommendedSize="MP4"
+                                                accept="video/mp4"
+                                                preview="video"
+                                                emptyLabel="Upload de Vídeo (MP4)"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Poster do Vídeo (opcional)</Label>
+                                            <ImageUpload
+                                                value={content?.about.videoPoster || ''}
+                                                onChange={(url) => updateField('about', 'videoPoster', url)}
+                                                pathPrefix="about"
+                                                recommendedSize="1280x720px"
+                                            />
                                         </div>
                                     </div>
 

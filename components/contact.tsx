@@ -1,20 +1,24 @@
-"use client"
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Phone, Mail, MapPin, Clock } from "lucide-react"
+import { getSiteContent } from "@/lib/actions"
 
-export function Contact() {
+export async function Contact() {
+  const content = await getSiteContent()
+
+  const phones =
+    content.contact.phones?.length ? content.contact.phones : content.contact.phone ? [content.contact.phone] : []
+
+  const officeHours = content.contact.officeHours ?? []
+
   return (
     <section id="contato" className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Entre em Contato</h2>
-          <p className="text-lg text-muted-foreground">
-            Estamos prontos para atender você e planejar sua próxima viagem
-          </p>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">{content.contact.sectionTitle}</h2>
+          <p className="text-lg text-muted-foreground">{content.contact.sectionSubtitle}</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
@@ -26,8 +30,11 @@ export function Contact() {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2">Telefone</h3>
-                  <p className="text-muted-foreground">(85) 99706-8113</p>
-                  <p className="text-muted-foreground">(85) 98750-7570</p>
+                  {phones.map((phone) => (
+                    <p key={phone} className="text-muted-foreground">
+                      {phone}
+                    </p>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -39,7 +46,7 @@ export function Contact() {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2">E-mail</h3>
-                  <p className="text-muted-foreground">contato@wilsonturismo.com.br</p>
+                  <p className="text-muted-foreground">{content.contact.email}</p>
                 </div>
               </CardContent>
             </Card>
@@ -51,7 +58,7 @@ export function Contact() {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2">Localização</h3>
-                  <p className="text-muted-foreground">Fortaleza, Ceará - Brasil</p>
+                  <p className="text-muted-foreground">{content.contact.location || content.contact.address}</p>
                 </div>
               </CardContent>
             </Card>
@@ -63,8 +70,11 @@ export function Contact() {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2">Horário de Atendimento</h3>
-                  <p className="text-muted-foreground">Segunda a Sexta: 8h às 18h</p>
-                  <p className="text-muted-foreground">Sábado: 8h às 12h</p>
+                  {officeHours.map((line) => (
+                    <p key={line} className="text-muted-foreground">
+                      {line}
+                    </p>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -72,7 +82,7 @@ export function Contact() {
 
           <Card className="border-border">
             <CardContent className="p-6">
-              <h3 className="text-2xl font-bold mb-6">Solicite um Orçamento</h3>
+              <h3 className="text-2xl font-bold mb-6">{content.contact.formTitle}</h3>
               <form className="space-y-4">
                 <div>
                   <label htmlFor="name" className="text-sm font-medium mb-2 block">
@@ -103,7 +113,7 @@ export function Contact() {
                   />
                 </div>
                 <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-                  Enviar Solicitação
+                  {content.contact.formSubmitLabel}
                 </Button>
               </form>
             </CardContent>

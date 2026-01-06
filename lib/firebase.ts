@@ -1,21 +1,41 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { initializeApp, getApps, getApp } from "firebase/app"
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"
 
-// TODO: Replace with your actual Firebase configuration
+const env = {
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+}
+
+export const isFirebaseConfigured = Boolean(
+    env.apiKey &&
+    env.authDomain &&
+    env.projectId &&
+    env.storageBucket &&
+    env.messagingSenderId &&
+    env.appId &&
+    env.apiKey !== "YOUR_API_KEY"
+)
+
 const firebaseConfig = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "YOUR_API_KEY",
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "your-project.firebaseapp.com",
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "your-project-id",
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "your-project.appspot.com",
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "your-sender-id",
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "your-app-id"
-};
+    apiKey: env.apiKey || "YOUR_API_KEY",
+    authDomain: env.authDomain || "your-project.firebaseapp.com",
+    projectId: env.projectId || "your-project-id",
+    storageBucket: env.storageBucket || "your-project.appspot.com",
+    messagingSenderId: env.messagingSenderId || "your-sender-id",
+    appId: env.appId || "your-app-id",
+    measurementId: env.measurementId
+}
 
 // Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const storage = getStorage(app);
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
+const storage = getStorage(app)
 
-export { storage };
+export { storage }
 
 /**
  * Uploads a file to Firebase Storage and returns the download URL.

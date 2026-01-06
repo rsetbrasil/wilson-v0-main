@@ -4,9 +4,11 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { uploadImage } from "@/lib/firebase"
+import { isFirebaseConfigured, uploadImage } from "@/lib/firebase"
 import { Loader2, Upload, X } from "lucide-react"
 import Image from "next/image"
+import { toast } from "sonner"
+import { uploadPublicFile } from "@/lib/actions"
 
 interface ImageUploadProps {
     value: string
@@ -14,9 +16,21 @@ interface ImageUploadProps {
     disabled?: boolean
     pathPrefix?: string
     recommendedSize?: string
+    accept?: string
+    emptyLabel?: string
+    preview?: "image" | "video"
 }
 
-export function ImageUpload({ value, onChange, disabled, pathPrefix = "images", recommendedSize }: ImageUploadProps) {
+export function ImageUpload({
+    value,
+    onChange,
+    disabled,
+    pathPrefix = "images",
+    recommendedSize,
+    accept = "image/*",
+    emptyLabel = "Upload de Imagem",
+    preview = "image"
+}: ImageUploadProps) {
     const [isUploading, setIsUploading] = useState(false)
     const [progress, setProgress] = useState(0)
 
@@ -27,12 +41,32 @@ export function ImageUpload({ value, onChange, disabled, pathPrefix = "images", 
         try {
             setIsUploading(true)
             const filePath = `${pathPrefix}/${Date.now()}-${file.name}`
-            const downloadUrl = await uploadImage(file, filePath)
-            onChange(downloadUrl)
+
+            if (isFirebaseConfigured) {
+                const downloadUrl = await uploadImage(file, filePath)
+                onChange(downloadUrl)
+                toast.success("Upload concluído.")
+                return
+            }
+
+            const formData = new FormData()
+            formData.append("file", file)
+            formData.append("pathPrefix", pathPrefix)
+
+            const result = await uploadPublicFile(formData)
+            if (!result.success) {
+                toast.error(result.error)
+                return
+            }
+
+            onChange(result.url)
+            toast.success("Upload concluído.")
         } catch (error) {
             console.error("Upload failed:", error)
+            toast.error("Falha no upload. Verifique o console.")
         } finally {
             setIsUploading(false)
+            e.target.value = ""
         }
     }
 
@@ -56,18 +90,17 @@ export function ImageUpload({ value, onChange, disabled, pathPrefix = "images", 
                                 <X className="h-4 w-4" />
                             </Button>
                         </div>
-                        <Image
-                            fill
-                            className="object-cover"
-                            alt="Image"
-                            src={value}
-                        />
+                        {preview === "video" ? (
+                            <video className="h-full w-full object-cover" src={value} controls preload="metadata" />
+                        ) : (
+                            <Image fill className="object-cover" alt="Image" src={value} />
+                        )}
                     </div>
                 ) : (
                     <div className="h-[133px] w-[200px] rounded-md border-2 border-dashed border-muted-foreground/25 flex items-center justify-center bg-muted/5">
                         <div className="text-center p-4">
                             <Upload className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />
-                            <p className="text-xs text-muted-foreground">Upload de Imagem</p>
+                            <p className="text-xs text-muted-foreground">{emptyLabel}</p>
                         </div>
                     </div>
                 )}
@@ -76,7 +109,7 @@ export function ImageUpload({ value, onChange, disabled, pathPrefix = "images", 
             <div className="flex items-center gap-2">
                 <Input
                     type="file"
-                    accept="image/*"
+                    accept={accept}
                     disabled={disabled || isUploading}
                     onChange={handleUpload}
                     className="max-w-[300px]"

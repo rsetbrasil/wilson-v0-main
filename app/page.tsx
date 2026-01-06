@@ -7,17 +7,17 @@ import { Fleet } from "@/components/fleet"
 import { Contact } from "@/components/contact"
 import { Footer } from "@/components/footer"
 
-export default function HomePage() {
+export default async function HomePage() {
   return (
     <main className="min-h-screen">
       <Header />
-      <Hero />
-      <Services />
-      <Destinations />
-      <About />
-      <Fleet />
-      <Contact />
-      <Footer />
+      {await Hero()}
+      {await Services()}
+      {await Destinations()}
+      {await About()}
+      {await Fleet()}
+      {await Contact()}
+      {await Footer()}
     </main>
   )
 }

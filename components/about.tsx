@@ -1,8 +1,43 @@
 import { getSiteContent } from "@/lib/actions"
 
+function toYouTubeEmbedUrl(url: string) {
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname === "youtu.be") {
+      const id = parsed.pathname.replace("/", "")
+      return id ? `https://www.youtube.com/embed/${id}` : url
+    }
+    if (parsed.hostname.includes("youtube.com")) {
+      const id = parsed.searchParams.get("v")
+      return id ? `https://www.youtube.com/embed/${id}` : url
+    }
+    return url
+  } catch {
+    return url
+  }
+}
+
+function toVimeoEmbedUrl(url: string) {
+  try {
+    const parsed = new URL(url)
+    if (!parsed.hostname.includes("vimeo.com")) return url
+    const parts = parsed.pathname.split("/").filter(Boolean)
+    const id = parts[0]
+    return id ? `https://player.vimeo.com/video/${id}` : url
+  } catch {
+    return url
+  }
+}
+
 export async function About() {
   const content = await getSiteContent()
   const { about } = content
+  const videoUrl = about.videoUrl?.trim() ?? ""
+
+  const isYouTube = videoUrl.includes("youtu.be") || videoUrl.includes("youtube.com")
+  const isVimeo = videoUrl.includes("vimeo.com")
+  const isDirectVideo = /\.(mp4|webm|ogg)(\?|#|$)/i.test(videoUrl)
+  const iframeSrc = isYouTube ? toYouTubeEmbedUrl(videoUrl) : isVimeo ? toVimeoEmbedUrl(videoUrl) : videoUrl
 
   return (
     <section className="py-20 bg-background">
@@ -19,32 +54,34 @@ export async function About() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-4">
-              <img
-                src="/modern-tour-bus-interior.jpg"
-                alt="Interior de ônibus"
-                className="rounded-lg w-full h-48 object-cover"
-              />
-              <img
-                src="/tour-guide-with-tourists.jpg"
-                alt="Guia com turistas"
-                className="rounded-lg w-full h-64 object-cover"
-              />
+          {videoUrl ? (
+            <div className="w-full overflow-hidden rounded-lg border bg-muted">
+              <div className="aspect-video">
+                {isDirectVideo ? (
+                  <video
+                    className="h-full w-full object-cover"
+                    controls
+                    preload="metadata"
+                    src={videoUrl}
+                    poster={about.videoPoster || undefined}
+                  />
+                ) : (
+                  <iframe
+                    className="h-full w-full"
+                    src={iframeSrc}
+                    title="Vídeo - Quem Somos"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  />
+                )}
+              </div>
             </div>
-            <div className="space-y-4 pt-8">
-              <img
-                src="/beach-tourism-ceara-brazil.jpg"
-                alt="Turismo praia"
-                className="rounded-lg w-full h-64 object-cover"
-              />
-              <img
-                src="/comfortable-bus-seats.jpg"
-                alt="Assentos confortáveis"
-                className="rounded-lg w-full h-48 object-cover"
-              />
+          ) : (
+            <div className="w-full overflow-hidden rounded-lg border bg-muted">
+              <div className="aspect-video" />
             </div>
-          </div>
+          )}
         </div>
       </div>
     </section>

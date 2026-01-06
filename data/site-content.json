@@ -5,9 +5,22 @@
     "backgroundImage": "/images/whatsapp-20image-202025-12-21-20at-2010.jpeg"
   },
   "contact": {
-    "phone": "(85) 99706-8113",
+    "sectionTitle": "Entre em Contato",
+    "sectionSubtitle": "Estamos prontos para atender você e planejar sua próxima viagem",
+    "phone": "(85) 98750-7870",
+    "phones": [
+      "(85) 98750-7870",
+      "(85) 99929-1904"
+    ],
     "email": "contato@wilsonturismo.com",
-    "address": "Rua Exemplo, 123 - Fortaleza, CE"
+    "location": "Fortaleza, Ceará - Brasil",
+    "address": "Rua Exemplo, 123 - Fortaleza, CE",
+    "officeHours": [
+      "Segunda a Sexta: 9h às 22h",
+      "Sábado: 9h às 18h"
+    ],
+    "formTitle": "Solicite um Orçamento",
+    "formSubmitLabel": "Enviar Solicitação"
   },
   "services": [
     {
@@ -48,25 +61,27 @@
   "about": {
     "title": "Quem Somos",
     "text1": "A Wilson Turismo é uma empresa que se destaca por sua moderna frota de veículos, aliada a uma equipe treinada e pronta para atender às necessidades de seus clientes.",
-    "text2": "A missão da empresa no mercado é oferecer soluções em serviços de transporte, garantindo a segurança, a pontualidade e o conforto de nossos passageiros."
+    "text2": "A missão da empresa no mercado é oferecer soluções em serviços de transporte, garantindo a segurança, a pontualidade e o conforto de nossos passageiros.",
+    "videoUrl": "/uploads/about-video/1767658145939-WhatsApp-Video-2025-12-21-at-10.57.31.mp4",
+    "videoPoster": ""
   },
   "fleet": [
     {
       "title": "Ônibus de Turismo",
       "description": "Ônibus completos com ar-condicionado, assentos reclináveis e sistema de som para viagens longas.",
-      "capacity": "Até 45 pessoas",
+      "capacity": "Consulte*",
       "image": "/images/whatsapp-20image-202025-12-21-20at-2010.jpeg"
     },
     {
       "title": "Vans Executivas",
       "description": "Vans modernas e confortáveis para grupos menores, ideais para traslados e eventos corporativos.",
-      "capacity": "Até 15 pessoas",
+      "capacity": "Consulte*",
       "image": "/images/whatsapp-20image-202025-12-21-20at-2010.jpeg"
     }
   ],
   "footer": {
     "description": "Transporte e turismo com segurança, conforto e pontualidade para todo o Brasil.",
-    "copyright": "© 2025 Wilson Turismo. Todos os direitos reservados."
+    "copyright": "© 2026 Wilson Turismo. Todos os direitos reservados."
   },
   "auth": {
     "email": "admin@wilsonturismo.com",
