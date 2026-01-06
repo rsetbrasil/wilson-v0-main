@@ -1,9 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useId, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Loader2, Upload, X } from "lucide-react"
 import Image from "next/image"
 import { toast } from "sonner"
@@ -31,7 +30,7 @@ export function ImageUpload({
     preview = "image"
 }: ImageUploadProps) {
     const [isUploading, setIsUploading] = useState(false)
-    const [progress, setProgress] = useState(0)
+    const inputId = useId()
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -97,20 +96,43 @@ export function ImageUpload({
                 )}
             </div>
 
-            <div className="flex items-center gap-2">
-                <Input
-                    type="file"
-                    accept={accept}
-                    disabled={disabled || isUploading}
-                    onChange={handleUpload}
-                    className="max-w-[300px]"
-                />
-                {isUploading && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Uploading...</span>
+            <div className="flex flex-col gap-3 max-w-[520px]">
+                <div className="flex items-center gap-2">
+                    <input
+                        id={inputId}
+                        type="file"
+                        accept={accept}
+                        disabled={disabled || isUploading}
+                        onChange={handleUpload}
+                        className="hidden"
+                    />
+                    <Button
+                        type="button"
+                        variant="outline"
+                        disabled={disabled || isUploading}
+                        onClick={() => document.getElementById(inputId)?.click()}
+                    >
+                        Selecionar arquivo
+                    </Button>
+                    <div className="text-sm text-muted-foreground">
+                        {value ? "Trocar arquivo" : "Nenhum arquivo selecionado"}
                     </div>
-                )}
+                    {isUploading && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Uploading...</span>
+                        </div>
+                    )}
+                </div>
+                <div className="space-y-2">
+                    <div className="text-sm font-medium">URL (opcional)</div>
+                    <Input
+                        value={value}
+                        disabled={disabled || isUploading}
+                        onChange={(e) => onChange(e.target.value)}
+                        placeholder="/uploads/... ou https://..."
+                    />
+                </div>
             </div>
             {recommendedSize && (
                 <p className="text-xs text-muted-foreground italic">
