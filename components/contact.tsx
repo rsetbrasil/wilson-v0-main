@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Phone, Mail, MapPin, Clock } from "lucide-react"
 import { getSiteContent } from "@/lib/actions"
+import { ContactForm } from "@/components/contact-form"
 
 export async function Contact() {
   const content = await getSiteContent()
@@ -83,39 +82,7 @@ export async function Contact() {
           <Card className="border-border">
             <CardContent className="p-6">
               <h3 className="text-2xl font-bold mb-6">{content.contact.formTitle}</h3>
-              <form className="space-y-4">
-                <div>
-                  <label htmlFor="name" className="text-sm font-medium mb-2 block">
-                    Nome
-                  </label>
-                  <Input id="name" placeholder="Seu nome completo" />
-                </div>
-                <div>
-                  <label htmlFor="email" className="text-sm font-medium mb-2 block">
-                    E-mail
-                  </label>
-                  <Input id="email" type="email" placeholder="seu@email.com" />
-                </div>
-                <div>
-                  <label htmlFor="phone" className="text-sm font-medium mb-2 block">
-                    Telefone
-                  </label>
-                  <Input id="phone" type="tel" placeholder="(85) 99999-9999" />
-                </div>
-                <div>
-                  <label htmlFor="message" className="text-sm font-medium mb-2 block">
-                    Mensagem
-                  </label>
-                  <Textarea
-                    id="message"
-                    placeholder="Conte-nos sobre sua necessidade de transporte ou turismo"
-                    className="min-h-[120px]"
-                  />
-                </div>
-                <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-                  {content.contact.formSubmitLabel}
-                </Button>
-              </form>
+              <ContactForm submitLabel={content.contact.formSubmitLabel} phones={phones} />
             </CardContent>
           </Card>
         </div>

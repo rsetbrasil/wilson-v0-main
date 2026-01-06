@@ -22,6 +22,36 @@ export default function DashboardPage() {
 
     useEffect(() => {
         getSiteContent().then((data) => {
+            const defaultFleetFeatures: SiteContent["fleetSection"]["features"] = [
+                { id: "capacity", type: "capacity", icon: "users", label: "" },
+                { id: "safety", type: "static", icon: "shield", label: "Seguro Total" },
+                { id: "wifi", type: "static", icon: "wifi", label: "Wi-Fi" }
+            ]
+
+            const normalizedHeader = {
+                brandName: data.header?.brandName ?? "Wilson Turismo",
+                brandTagline: data.header?.brandTagline ?? "Fretamento e Turismo",
+                phone: data.header?.phone ?? "(85) 99706-8113",
+                ctaLabel: data.header?.ctaLabel ?? "Solicitar Orçamento",
+                ctaHref: data.header?.ctaHref ?? "#contato"
+            }
+
+            const legacyFleetSection = data.fleetSection as any
+            const legacySafetyLabel = typeof legacyFleetSection?.safetyLabel === "string" ? legacyFleetSection.safetyLabel : undefined
+            const legacyWifiLabel = typeof legacyFleetSection?.wifiLabel === "string" ? legacyFleetSection.wifiLabel : undefined
+
+            const normalizedFleetSection = {
+                title: data.fleetSection?.title ?? "Nossa Frota",
+                subtitle: data.fleetSection?.subtitle ?? "Veículos modernos e bem conservados para sua segurança e conforto",
+                features:
+                    data.fleetSection?.features?.length
+                        ? data.fleetSection.features
+                        : [
+                              defaultFleetFeatures[0],
+                              { id: "safety", type: "static" as const, icon: "shield" as const, label: legacySafetyLabel ?? defaultFleetFeatures[1].label },
+                              { id: "wifi", type: "static" as const, icon: "wifi" as const, label: legacyWifiLabel ?? defaultFleetFeatures[2].label }
+                          ] as SiteContent["fleetSection"]["features"]
+            }
             const normalizedContact = {
                 ...data.contact,
                 phones: data.contact.phones?.length ? data.contact.phones : data.contact.phone ? [data.contact.phone] : [],
@@ -33,7 +63,7 @@ export default function DashboardPage() {
                 formTitle: data.contact.formTitle ?? "Solicite um Orçamento",
                 formSubmitLabel: data.contact.formSubmitLabel ?? "Enviar Solicitação"
             }
-            setContent({ ...data, contact: normalizedContact })
+            setContent({ ...data, header: normalizedHeader, fleetSection: normalizedFleetSection, contact: normalizedContact })
             setIsLoading(false)
         })
     }, [])
@@ -78,6 +108,31 @@ export default function DashboardPage() {
         // @ts-ignore
         newArray[index] = { ...newArray[index], [field]: value }
         setContent({ ...content, [section]: newArray })
+    }
+
+    const updateFleetFeature = (index: number, patch: Partial<SiteContent["fleetSection"]["features"][number]>) => {
+        if (!content) return
+        const nextFeatures = [...(content.fleetSection.features ?? [])]
+        const current = nextFeatures[index]
+        if (!current) return
+        nextFeatures[index] = { ...current, ...patch }
+        setContent({ ...content, fleetSection: { ...content.fleetSection, features: nextFeatures } })
+    }
+
+    const addFleetFeature = () => {
+        if (!content) return
+        const nextFeatures = [
+            ...(content.fleetSection.features ?? []),
+            { id: `custom-${Date.now()}`, type: "static", icon: "none", label: "" }
+        ] as SiteContent["fleetSection"]["features"]
+        setContent({ ...content, fleetSection: { ...content.fleetSection, features: nextFeatures } })
+    }
+
+    const removeFleetFeature = (index: number) => {
+        if (!content) return
+        const nextFeatures = [...(content.fleetSection.features ?? [])]
+        nextFeatures.splice(index, 1)
+        setContent({ ...content, fleetSection: { ...content.fleetSection, features: nextFeatures } })
     }
 
     const updateContactStringListItem = (field: 'phones' | 'officeHours', index: number, value: string) => {
@@ -183,6 +238,31 @@ export default function DashboardPage() {
                             <Card>
                                 <CardHeader><CardTitle>Informações Gerais</CardTitle></CardHeader>
                                 <CardContent className="space-y-6">
+                                    <div className="space-y-4 border p-4 rounded-lg">
+                                        <h3 className="text-lg font-semibold">Cabeçalho</h3>
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label>Nome</Label>
+                                                <Input value={content?.header.brandName || ''} onChange={(e) => updateField('header', 'brandName', e.target.value)} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Subtítulo</Label>
+                                                <Input value={content?.header.brandTagline || ''} onChange={(e) => updateField('header', 'brandTagline', e.target.value)} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Telefone</Label>
+                                                <Input value={content?.header.phone || ''} onChange={(e) => updateField('header', 'phone', e.target.value)} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Botão (texto)</Label>
+                                                <Input value={content?.header.ctaLabel || ''} onChange={(e) => updateField('header', 'ctaLabel', e.target.value)} />
+                                            </div>
+                                            <div className="space-y-2 md:col-span-2">
+                                                <Label>Botão (link)</Label>
+                                                <Input value={content?.header.ctaHref || ''} onChange={(e) => updateField('header', 'ctaHref', e.target.value)} />
+                                            </div>
+                                        </div>
+                                    </div>
                                     {/* Hero */}
                                     <div className="space-y-4 border p-4 rounded-lg">
                                         <h3 className="text-lg font-semibold">Topo do Site (Hero)</h3>
@@ -373,6 +453,81 @@ export default function DashboardPage() {
                             <Card>
                                 <CardHeader><CardTitle>Nossa Frota</CardTitle></CardHeader>
                                 <CardContent className="space-y-8">
+                                    <div className="space-y-4 border p-4 rounded-lg">
+                                        <h3 className="text-lg font-semibold">Seção Frota</h3>
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            <div className="space-y-2 md:col-span-2">
+                                                <Label>Título da Seção</Label>
+                                                <Input value={content?.fleetSection.title || ''} onChange={(e) => updateField('fleetSection', 'title', e.target.value)} />
+                                            </div>
+                                            <div className="space-y-2 md:col-span-2">
+                                                <Label>Subtítulo da Seção</Label>
+                                                <Textarea value={content?.fleetSection.subtitle || ''} onChange={(e) => updateField('fleetSection', 'subtitle', e.target.value)} />
+                                            </div>
+                                            <div className="space-y-3 md:col-span-2">
+                                                <div className="flex items-center justify-between gap-4">
+                                                    <Label>Ícones/Features do Card</Label>
+                                                    <Button type="button" variant="outline" size="sm" className="gap-2" onClick={addFleetFeature}>
+                                                        <Plus className="h-4 w-4" />
+                                                        Adicionar
+                                                    </Button>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    {(content?.fleetSection.features ?? []).map((feature, index) => (
+                                                        <div key={feature.id} className="grid md:grid-cols-12 gap-2 items-end border rounded-lg p-3">
+                                                            <div className="md:col-span-3 space-y-1">
+                                                                <Label>Tipo</Label>
+                                                                <select
+                                                                    className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                                                                    value={feature.type}
+                                                                    onChange={(e) => updateFleetFeature(index, { type: e.target.value as any })}
+                                                                >
+                                                                    <option value="capacity">Capacidade</option>
+                                                                    <option value="static">Texto</option>
+                                                                </select>
+                                                            </div>
+                                                            <div className="md:col-span-3 space-y-1">
+                                                                <Label>Ícone</Label>
+                                                                <select
+                                                                    className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                                                                    value={feature.icon}
+                                                                    onChange={(e) => updateFleetFeature(index, { icon: e.target.value as any })}
+                                                                >
+                                                                    <option value="none">Sem ícone</option>
+                                                                    <option value="users">Users</option>
+                                                                    <option value="shield">Shield</option>
+                                                                    <option value="wifi">Wifi</option>
+                                                                    <option value="check-circle">CheckCircle</option>
+                                                                    <option value="star">Star</option>
+                                                                    <option value="map-pin">MapPin</option>
+                                                                    <option value="clock">Clock</option>
+                                                                </select>
+                                                            </div>
+                                                            <div className="md:col-span-5 space-y-1">
+                                                                <Label>Texto</Label>
+                                                                <Input
+                                                                    value={feature.type === "capacity" ? "usa o campo Capacidade do veículo" : (feature.label ?? "")}
+                                                                    disabled={feature.type === "capacity"}
+                                                                    onChange={(e) => updateFleetFeature(index, { label: e.target.value })}
+                                                                />
+                                                            </div>
+                                                            <div className="md:col-span-1 flex justify-end">
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    size="icon"
+                                                                    aria-label="Remover feature"
+                                                                    onClick={() => removeFleetFeature(index)}
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     {content?.fleet.map((item, index) => (
                                         <div key={index} className="border p-4 rounded-lg space-y-4">
                                             <h4 className="font-semibold text-primary">Veículo #{index + 1}</h4>

@@ -5,8 +5,25 @@ import { Button } from "@/components/ui/button"
 import { Menu, Phone, LogIn } from "lucide-react"
 import { useState } from "react"
 
-export function Header() {
+interface HeaderProps {
+  header?: {
+    brandName?: string
+    brandTagline?: string
+    phone?: string
+    ctaLabel?: string
+    ctaHref?: string
+  }
+}
+
+export function Header({ header }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const headerConfig = {
+    brandName: header?.brandName ?? "Wilson Turismo",
+    brandTagline: header?.brandTagline ?? "Fretamento e Turismo",
+    phone: header?.phone ?? "(85) 99706-8113",
+    ctaLabel: header?.ctaLabel ?? "Solicitar Orçamento",
+    ctaHref: header?.ctaHref ?? "#contato"
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -17,8 +34,8 @@ export function Header() {
               <span className="text-xl font-bold text-primary-foreground">W</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-lg font-bold text-foreground">Wilson Turismo</span>
-              <span className="text-[10px] text-muted-foreground">Fretamento e Turismo</span>
+              <span className="text-lg font-bold text-foreground">{headerConfig.brandName}</span>
+              <span className="text-[10px] text-muted-foreground">{headerConfig.brandTagline}</span>
             </div>
           </div>
 
@@ -43,10 +60,10 @@ export function Header() {
           <div className="hidden md:flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm">
               <Phone className="h-4 w-4 text-primary" />
-              <span className="font-medium">(85) 99706-8113</span>
+              <span className="font-medium">{headerConfig.phone}</span>
             </div>
-            <Button size="sm" className="bg-primary hover:bg-primary/90">
-              Solicitar Orçamento
+            <Button size="sm" className="bg-primary hover:bg-primary/90" asChild>
+              <a href={headerConfig.ctaHref}>{headerConfig.ctaLabel}</a>
             </Button>
             <Link href="/login">
               <Button variant="ghost" size="icon" aria-label="Login">
@@ -78,8 +95,8 @@ export function Header() {
               <a href="#contato" className="text-sm font-medium">
                 Contato
               </a>
-              <Button size="sm" className="w-full bg-primary">
-                Solicitar Orçamento
+              <Button size="sm" className="w-full bg-primary" asChild>
+                <a href={headerConfig.ctaHref}>{headerConfig.ctaLabel}</a>
               </Button>
               <Link href="/login" className="w-full">
                 <Button variant="ghost" className="w-full justify-start gap-2">

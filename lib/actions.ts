@@ -58,9 +58,34 @@ async function readSiteContentJson(): Promise<Partial<SiteContent>> {
 }
 
 function mergeSiteContent(parsed: Partial<SiteContent>): SiteContent {
+    const parsedFleetSection = (parsed as any).fleetSection as any
+    const mergedFleetSectionBase = {
+        ...defaultSiteContent.fleetSection,
+        ...(parsedFleetSection ?? {})
+    }
+
+    const mergedFleetSection = {
+        title: mergedFleetSectionBase.title,
+        subtitle: mergedFleetSectionBase.subtitle,
+        features: Array.isArray(mergedFleetSectionBase.features) ? mergedFleetSectionBase.features : undefined
+    } as SiteContent["fleetSection"]
+
+    if (!Array.isArray(mergedFleetSection.features)) {
+        const safetyLabel = typeof parsedFleetSection?.safetyLabel === "string" ? parsedFleetSection.safetyLabel : defaultSiteContent.fleetSection.features[1].label
+        const wifiLabel = typeof parsedFleetSection?.wifiLabel === "string" ? parsedFleetSection.wifiLabel : defaultSiteContent.fleetSection.features[2].label
+
+        mergedFleetSection.features = [
+            defaultSiteContent.fleetSection.features[0],
+            { id: "safety", type: "static", icon: "shield", label: safetyLabel },
+            { id: "wifi", type: "static", icon: "wifi", label: wifiLabel }
+        ]
+    }
+
     const merged: SiteContent = {
         ...defaultSiteContent,
         ...parsed,
+        header: { ...defaultSiteContent.header, ...parsed.header },
+        fleetSection: mergedFleetSection,
         hero: { ...defaultSiteContent.hero, ...parsed.hero },
         contact: { ...defaultSiteContent.contact, ...parsed.contact },
         services: parsed.services ?? defaultSiteContent.services,
@@ -99,12 +124,42 @@ export interface FleetItem {
     image: string
 }
 
+export type FleetFeatureType = "capacity" | "static"
+export type FleetFeatureIcon =
+    | "none"
+    | "users"
+    | "shield"
+    | "wifi"
+    | "check-circle"
+    | "star"
+    | "map-pin"
+    | "clock"
+
+export interface FleetFeature {
+    id: string
+    type: FleetFeatureType
+    icon: FleetFeatureIcon
+    label: string
+}
+
 export interface AuthContent {
     email: string
     password: string
 }
 
 export interface SiteContent {
+    header: {
+        brandName: string
+        brandTagline: string
+        phone: string
+        ctaLabel: string
+        ctaHref: string
+    }
+    fleetSection: {
+        title: string
+        subtitle: string
+        features: FleetFeature[]
+    }
     hero: {
         title: string
         description: string
@@ -140,6 +195,22 @@ export interface SiteContent {
 }
 
 const defaultSiteContent: SiteContent = {
+    header: {
+        brandName: "Wilson Turismo",
+        brandTagline: "Fretamento e Turismo",
+        phone: "(85) 99706-8113",
+        ctaLabel: "Solicitar Orçamento",
+        ctaHref: "#contato"
+    },
+    fleetSection: {
+        title: "Nossa Frota",
+        subtitle: "Veículos modernos e bem conservados para sua segurança e conforto",
+        features: [
+            { id: "capacity", type: "capacity", icon: "users", label: "" },
+            { id: "safety", type: "static", icon: "shield", label: "Seguro Total" },
+            { id: "wifi", type: "static", icon: "wifi", label: "Wi-Fi" }
+        ]
+    },
     hero: { title: "", description: "", backgroundImage: "" },
     contact: {
         sectionTitle: "Entre em Contato",
