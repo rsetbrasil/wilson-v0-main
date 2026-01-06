@@ -4,11 +4,10 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { isFirebaseConfigured, uploadImage } from "@/lib/firebase"
 import { Loader2, Upload, X } from "lucide-react"
 import Image from "next/image"
 import { toast } from "sonner"
-import { uploadPublicFile } from "@/lib/actions"
+import { uploadManagedFile } from "@/lib/actions"
 
 interface ImageUploadProps {
     value: string
@@ -40,20 +39,12 @@ export function ImageUpload({
 
         try {
             setIsUploading(true)
-            const filePath = `${pathPrefix}/${Date.now()}-${file.name}`
-
-            if (isFirebaseConfigured) {
-                const downloadUrl = await uploadImage(file, filePath)
-                onChange(downloadUrl)
-                toast.success("Upload concluído.")
-                return
-            }
 
             const formData = new FormData()
             formData.append("file", file)
             formData.append("pathPrefix", pathPrefix)
 
-            const result = await uploadPublicFile(formData)
+            const result = await uploadManagedFile(formData)
             if (!result.success) {
                 toast.error(result.error)
                 return

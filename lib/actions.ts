@@ -4,11 +4,12 @@ import fs from "fs/promises"
 import path from "path"
 import { applicationDefault, cert, getApps as getAdminApps, initializeApp as initializeAdminApp } from "firebase-admin/app"
 import { getFirestore } from "firebase-admin/firestore"
+import { getStorage as getAdminStorage } from "firebase-admin/storage"
 
 const dataPath = path.join(process.cwd(), "data", "site-content.json")
 const uploadsRoot = path.join(process.cwd(), "public", "uploads")
 
-function getAdminDb() {
+function ensureAdminApp() {
     try {
         const hasServiceAccount = Boolean(process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim())
         const hasAdc = Boolean(
@@ -17,7 +18,7 @@ function getAdminDb() {
             process.env.GCLOUD_PROJECT?.trim()
         )
 
-        if (!hasServiceAccount && !hasAdc) return null
+        if (!hasServiceAccount && !hasAdc) return false
 
         if (!getAdminApps().length) {
             const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
@@ -34,6 +35,15 @@ function getAdminDb() {
             }
         }
 
+        return true
+    } catch {
+        return false
+    }
+}
+
+function getAdminDb() {
+    if (!ensureAdminApp()) return null
+    try {
         return getFirestore()
     } catch {
         return null
@@ -226,4 +236,58 @@ export async function uploadPublicFile(formData: FormData): Promise<{ success: t
         console.error("Error uploading public file:", error)
         return { success: false, error: "Falha ao fazer upload." }
     }
+}
+
+export async function uploadManagedFile(formData: FormData): Promise<{ success: true; url: string } | { success: false; error: string }> {
+    const file = formData.get("file")
+    const pathPrefixRaw = formData.get("pathPrefix")
+    const pathPrefix = typeof pathPrefixRaw === "string" && pathPrefixRaw.trim() ? pathPrefixRaw.trim() : "misc"
+
+    if (!(file instanceof File)) {
+        return { success: false, error: "Arquivo inválido." }
+    }
+
+    const maxBytes = 80 * 1024 * 1024
+    if (file.size > maxBytes) {
+        return { success: false, error: "Arquivo muito grande (máx 80MB)." }
+    }
+
+    const safePrefix = pathPrefix.replace(/[^a-zA-Z0-9-_]/g, "-")
+    const originalName = file.name || "upload"
+    const safeName = originalName.replace(/[^a-zA-Z0-9._-]/g, "-")
+    const finalName = `${Date.now()}-${safeName}`
+    const objectName = `${safePrefix}/${finalName}`
+
+    if (ensureAdminApp()) {
+        const bucketName =
+            process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET?.trim() ||
+            process.env.FIREBASE_STORAGE_BUCKET?.trim()
+
+        if (bucketName) {
+            try {
+                const arrayBuffer = await file.arrayBuffer()
+                const buffer = Buffer.from(arrayBuffer)
+
+                const bucket = getAdminStorage().bucket(bucketName)
+                const remoteFile = bucket.file(objectName)
+
+                await remoteFile.save(buffer, {
+                    resumable: false,
+                    metadata: {
+                        contentType: file.type || "application/octet-stream"
+                    }
+                })
+
+                const [signedUrl] = await remoteFile.getSignedUrl({
+                    action: "read",
+                    expires: "01-01-2500"
+                })
+
+                return { success: true, url: signedUrl }
+            } catch {
+            }
+        }
+    }
+
+    return uploadPublicFile(formData)
 }
