@@ -63,7 +63,21 @@ export default function DashboardPage() {
                 formTitle: data.contact.formTitle ?? "Solicite um Orçamento",
                 formSubmitLabel: data.contact.formSubmitLabel ?? "Enviar Solicitação"
             }
-            setContent({ ...data, header: normalizedHeader, fleetSection: normalizedFleetSection, contact: normalizedContact })
+            const normalizedAuthUsers = (data.auth.users ?? [])
+                .map((u, idx) => ({
+                    id: u.id?.trim() ? u.id : `user-${idx + 1}`,
+                    email: u.email?.trim() ?? "",
+                    password: u.password ?? ""
+                }))
+                .filter((u) => u.email && u.password)
+
+            const normalizedAuth = {
+                users: normalizedAuthUsers.length
+                    ? normalizedAuthUsers
+                    : [{ id: "user-1", email: "admin@wilsonturismo.com", password: "admin123" }]
+            }
+
+            setContent({ ...data, header: normalizedHeader, fleetSection: normalizedFleetSection, contact: normalizedContact, auth: normalizedAuth })
             setIsLoading(false)
         })
     }, [])
@@ -108,6 +122,35 @@ export default function DashboardPage() {
         // @ts-ignore
         newArray[index] = { ...newArray[index], [field]: value }
         setContent({ ...content, [section]: newArray })
+    }
+
+    const updateAuthUser = (index: number, field: "email" | "password", value: string) => {
+        if (!content) return
+        const users = [...(content.auth.users ?? [])]
+        const current = users[index]
+        if (!current) return
+        users[index] = { ...current, [field]: value }
+        setContent({ ...content, auth: { ...content.auth, users } })
+    }
+
+    const addAuthUser = () => {
+        if (!content) return
+        const users = [
+            ...(content.auth.users ?? []),
+            { id: `user-${Date.now()}`, email: "", password: "" }
+        ]
+        setContent({ ...content, auth: { ...content.auth, users } })
+    }
+
+    const removeAuthUser = (index: number) => {
+        if (!content) return
+        const users = [...(content.auth.users ?? [])]
+        if (users.length <= 1) {
+            toast.error("Você precisa manter pelo menos 1 usuário.")
+            return
+        }
+        users.splice(index, 1)
+        setContent({ ...content, auth: { ...content.auth, users } })
     }
 
     const updateFleetFeature = (index: number, patch: Partial<SiteContent["fleetSection"]["features"][number]>) => {
@@ -205,7 +248,7 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground bg-background px-4 py-2 rounded-full border">
                             <User className="h-4 w-4" />
-                            {content?.auth.email.split('@')[0] || 'admin'}
+                            {(content?.auth.users?.[0]?.email ?? "admin").split('@')[0]}
                         </div>
                         <Button variant="outline" onClick={handleLogout} className="gap-2">
                             <LogOut className="h-4 w-4" />
@@ -627,27 +670,53 @@ export default function DashboardPage() {
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     <div className="space-y-4 border p-4 rounded-lg">
-                                        <h3 className="text-lg font-semibold">Credenciais do Administrador</h3>
-                                        <div className="grid md:grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <Label>Email de Login</Label>
-                                                <Input
-                                                    type="email"
-                                                    value={content?.auth.email || ''}
-                                                    onChange={(e) => updateField('auth', 'email', e.target.value)}
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label>Nova Senha</Label>
-                                                <Input
-                                                    type="password"
-                                                    value={content?.auth.password || ''}
-                                                    onChange={(e) => updateField('auth', 'password', e.target.value)}
-                                                />
-                                                <p className="text-xs text-muted-foreground italic">
-                                                    Mínimo de 6 caracteres recomendado.
-                                                </p>
-                                            </div>
+                                        <div className="flex items-center justify-between gap-4">
+                                            <h3 className="text-lg font-semibold">Usuários</h3>
+                                            <Button type="button" variant="outline" size="sm" className="gap-2" onClick={addAuthUser}>
+                                                <Plus className="h-4 w-4" />
+                                                Novo usuário
+                                            </Button>
+                                        </div>
+                                        <div className="space-y-4">
+                                            {(content?.auth.users ?? []).map((u, index) => (
+                                                <div key={u.id} className="border rounded-lg p-4 space-y-4">
+                                                    <div className="flex items-center justify-between gap-4">
+                                                        <div className="text-sm font-medium text-muted-foreground">Usuário #{index + 1}</div>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="icon"
+                                                            aria-label="Remover usuário"
+                                                            onClick={() => removeAuthUser(index)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                    <div className="grid md:grid-cols-2 gap-4">
+                                                        <div className="space-y-2">
+                                                            <Label>Email</Label>
+                                                            <Input
+                                                                type="email"
+                                                                value={u.email}
+                                                                onChange={(e) => updateAuthUser(index, "email", e.target.value)}
+                                                                placeholder="usuario@exemplo.com"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <Label>Senha</Label>
+                                                            <Input
+                                                                type="password"
+                                                                value={u.password}
+                                                                onChange={(e) => updateAuthUser(index, "password", e.target.value)}
+                                                                placeholder="Nova senha"
+                                                            />
+                                                            <p className="text-xs text-muted-foreground italic">
+                                                                Mínimo de 6 caracteres recomendado.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                     <div className="bg-amber-50 border-amber-200 border p-4 rounded-lg flex items-start gap-3">
@@ -657,7 +726,7 @@ export default function DashboardPage() {
                                         <div>
                                             <p className="text-sm font-medium text-amber-900">Atenção</p>
                                             <p className="text-sm text-amber-700">
-                                                Ao alterar essas credenciais, você precisará usá-las no próximo login.
+                                                Ao alterar usuários/senhas, você precisará usá-los no próximo login.
                                                 Certifique-se de salvá-las em um local seguro.
                                             </p>
                                         </div>

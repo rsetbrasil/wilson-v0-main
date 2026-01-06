@@ -8,6 +8,8 @@ import { Contact } from "@/components/contact"
 import { Footer } from "@/components/footer"
 import { getSiteContent } from "@/lib/actions"
 
+export const dynamic = "force-dynamic"
+
 export default async function HomePage() {
   const content = await getSiteContent()
   return (

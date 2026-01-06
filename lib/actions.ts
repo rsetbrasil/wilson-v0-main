@@ -2,6 +2,7 @@
 
 import fs from "fs/promises"
 import path from "path"
+import { unstable_noStore as noStore } from "next/cache"
 import { applicationDefault, cert, getApps as getAdminApps, initializeApp as initializeAdminApp } from "firebase-admin/app"
 import { getFirestore } from "firebase-admin/firestore"
 import { getStorage as getAdminStorage } from "firebase-admin/storage"
@@ -81,6 +82,28 @@ function mergeSiteContent(parsed: Partial<SiteContent>): SiteContent {
         ]
     }
 
+    const parsedAuth = (parsed as any).auth as any
+    const parsedUsersRaw = parsedAuth?.users
+    const legacyEmail = typeof parsedAuth?.email === "string" ? parsedAuth.email : ""
+    const legacyPassword = typeof parsedAuth?.password === "string" ? parsedAuth.password : ""
+
+    const usersFromParsed = Array.isArray(parsedUsersRaw)
+        ? parsedUsersRaw
+            .map((u: any, idx: number) => ({
+                id: typeof u?.id === "string" && u.id.trim() ? u.id.trim() : `user-${idx + 1}`,
+                email: typeof u?.email === "string" ? u.email.trim() : "",
+                password: typeof u?.password === "string" ? u.password : ""
+            }))
+            .filter((u: any) => Boolean(u.email) && Boolean(u.password))
+        : []
+
+    const mergedAuth: AuthContent =
+        usersFromParsed.length
+            ? { users: usersFromParsed }
+            : legacyEmail && legacyPassword
+                ? { users: [{ id: "user-1", email: legacyEmail, password: legacyPassword }] }
+                : defaultSiteContent.auth
+
     const merged: SiteContent = {
         ...defaultSiteContent,
         ...parsed,
@@ -93,7 +116,7 @@ function mergeSiteContent(parsed: Partial<SiteContent>): SiteContent {
         about: { ...defaultSiteContent.about, ...parsed.about },
         fleet: parsed.fleet ?? defaultSiteContent.fleet,
         footer: { ...defaultSiteContent.footer, ...parsed.footer },
-        auth: { ...defaultSiteContent.auth, ...parsed.auth }
+        auth: mergedAuth
     }
 
     merged.contact.phones = merged.contact.phones?.length
@@ -142,9 +165,14 @@ export interface FleetFeature {
     label: string
 }
 
-export interface AuthContent {
+export interface AuthUser {
+    id: string
     email: string
     password: string
+}
+
+export interface AuthContent {
+    users: AuthUser[]
 }
 
 export interface SiteContent {
@@ -229,10 +257,13 @@ const defaultSiteContent: SiteContent = {
     about: { title: "", text1: "", text2: "", videoUrl: "", videoPoster: "" },
     fleet: [],
     footer: { description: "", copyright: "" },
-    auth: { email: "admin@wilsonturismo.com", password: "admin123" }
+    auth: {
+        users: [{ id: "user-1", email: "admin@wilsonturismo.com", password: "admin123" }]
+    }
 }
 
 export async function getSiteContent(): Promise<SiteContent> {
+    noStore()
     try {
         const adminDb = getAdminDb()
         if (adminDb) {
@@ -260,6 +291,7 @@ export async function getSiteContent(): Promise<SiteContent> {
 }
 
 export async function updateSiteContent(newContent: SiteContent) {
+    noStore()
     try {
         const adminDb = getAdminDb()
         if (adminDb) {

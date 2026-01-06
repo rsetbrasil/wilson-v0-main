@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Loader2 } from "lucide-react"
@@ -21,15 +21,19 @@ export default function LoginPage() {
         setError("")
 
         const formData = new FormData(event.currentTarget)
-        const email = formData.get("email") as string
-        const password = formData.get("password") as string
+        const email = ((formData.get("email") as string) ?? "").trim().toLowerCase()
+        const password = (formData.get("password") as string) ?? ""
 
         const siteContent = await getSiteContent()
 
-        // Simulating network delay
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        const isValid = (siteContent.auth.users ?? []).some(
+            (u) => u.email.trim().toLowerCase() === email && u.password === password
+        )
 
-        if (email === siteContent.auth.email && password === siteContent.auth.password) {
+        // Simulating network delay
+        await new Promise((resolve) => setTimeout(resolve, 600))
+
+        if (isValid) {
             router.push("/dashboard")
         } else {
             setError("Email ou senha incorretos.")
@@ -64,19 +68,10 @@ export default function LoginPage() {
                                 type="email"
                                 placeholder="nome@exemplo.com"
                                 required
-                                defaultValue="admin@wilsonturismo.com"
                             />
                         </div>
                         <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="password">Senha</Label>
-                                <Link
-                                    href="#"
-                                    className="text-xs text-primary hover:underline"
-                                >
-                                    Esqueceu a senha?
-                                </Link>
-                            </div>
+                            <Label htmlFor="password">Senha</Label>
                             <Input
                                 id="password"
                                 name="password"
@@ -101,14 +96,6 @@ export default function LoginPage() {
                         </Button>
                     </form>
                 </CardContent>
-                <CardFooter className="flex justify-center">
-                    <p className="text-sm text-muted-foreground">
-                        Não tem uma conta?{" "}
-                        <Link href="#" className="text-primary hover:underline">
-                            Contate o administrador
-                        </Link>
-                    </p>
-                </CardFooter>
             </Card>
         </div>
     )
