@@ -267,16 +267,30 @@ export async function updateSiteContent(newContent: SiteContent) {
             return { success: true }
         }
 
+        if (process.env.VERCEL) {
+            return {
+                success: false,
+                error: "Na hospedagem (Vercel), a edição exige Firebase Admin. Configure FIREBASE_SERVICE_ACCOUNT_JSON para salvar no Firestore."
+            }
+        }
+
         await fs.writeFile(dataPath, JSON.stringify(newContent, null, 2), "utf-8")
         return { success: true }
     } catch (error) {
         console.error("Error updating site content:", error)
-        return { success: false, error: "Failed to update content" }
+        return { success: false, error: "Falha ao salvar conteúdo." }
     }
 }
 
 export async function uploadPublicFile(formData: FormData): Promise<{ success: true; url: string } | { success: false; error: string }> {
     try {
+        if (process.env.VERCEL) {
+            return {
+                success: false,
+                error: "Na hospedagem (Vercel), upload local não funciona. Configure Firebase Storage (FIREBASE_SERVICE_ACCOUNT_JSON)."
+            }
+        }
+
         const file = formData.get("file")
         const pathPrefixRaw = formData.get("pathPrefix")
         const pathPrefix = typeof pathPrefixRaw === "string" && pathPrefixRaw.trim() ? pathPrefixRaw.trim() : "misc"
@@ -356,7 +370,20 @@ export async function uploadManagedFile(formData: FormData): Promise<{ success: 
 
                 return { success: true, url: signedUrl }
             } catch {
+                if (process.env.VERCEL) {
+                    return { success: false, error: "Falha no upload para Firebase Storage. Verifique credenciais, bucket e permissões." }
+                }
             }
+        } else if (process.env.VERCEL) {
+            return {
+                success: false,
+                error: "Bucket do Firebase Storage não configurado. Defina NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET (ou FIREBASE_STORAGE_BUCKET)."
+            }
+        }
+    } else if (process.env.VERCEL) {
+        return {
+            success: false,
+            error: "Firebase Admin não configurado. Defina FIREBASE_SERVICE_ACCOUNT_JSON na hospedagem para liberar uploads."
         }
     }
 

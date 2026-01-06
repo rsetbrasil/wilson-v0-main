@@ -84,7 +84,7 @@ export default function DashboardPage() {
             toast.success("Conteúdo atualizado com sucesso!")
             router.refresh()
         } else {
-            toast.error("Erro ao atualizar conteúdo.")
+            toast.error(result.error ?? "Erro ao atualizar conteúdo.")
         }
     }
 
